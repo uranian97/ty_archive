@@ -47,11 +47,14 @@ or you can use some of the commands below to get information.
             db.load_csv(file_name, con)
     #get size of a certain year
     elif function=='sizeof':
-        print(size.of_year(int(args[1]),con))
+        print(size.readable_size(size.of_year(int(args[1]),con)))
     #get size report for all years
     elif function=="sizereport":
-        print("Table: size_by_year")
-        print(size.all_years(con, args[1] , args[2]).to_string())
+        if len(args) == 3:
+            print("Table: size_by_year")
+            print(size.all_years(con, args[1] , args[2]).to_string())
+        else:
+            print("please specify a valid range of years")
     #print duplicates of folder
     elif function=="folder":
 
