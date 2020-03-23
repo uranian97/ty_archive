@@ -26,27 +26,8 @@ def main():
 
 def parse(cmd, con):
     exit_parse = False
-
-    #if db has contents no contents
-        #prompt load file table
-    #if files table exists
-    # try executing the statement
-        #if cmd is like an sql query
-            #sql handdle query()
-                #if its a valid sql query
-                    #execute it
-                #else say invalid sql query
-                    #prompt again
-        #else
-            #split commands
     args = cmd.split()
     function = args[0].strip()
-    print(f"function:{function}")
-            #if help
-                #help
-            #if load
-                #load(file)
-    #load in a new csv of files to main archive table
     if function=='help':
         print("""you can execute normal SQL queries with this database
     -to access the table containing your filelist is called 'files'
@@ -73,7 +54,8 @@ or you can use some of the commands below to get information.
         print(size.all_years(con, args[1] , args[2]).to_string())
     #print duplicates of folder
     elif function=="folder":
-        print(files.get_folder(args[2],con).to_string(columns=['file_name','kind','location']))
+
+        print(files.get_folder(args[1],con).to_string(columns=['file_name','kind','location']))
     #print all duplicate files grouped
     elif function=="duplicatereport":
         dupes.report(con,True)
