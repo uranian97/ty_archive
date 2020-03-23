@@ -90,11 +90,11 @@ or you can use some of the commands below to get information.
         con.close()
     else:
         try:
-            results = con.execute(cmd)
-            df = pd.DataFrame(results.fetchall())
-            df.columns = results.keys()
+            cur = con.cursor()
+            results = cur.execute(cmd.strip())
+            df = pd.read_sql_query(cmd.strip(), con)
             print(df.to_string())
-        except Exception as e:
+        except sqlite3.Error as e:
             print("Error: Invalid statement or command. Type help for more info.")
     #await next prompt if still open
     if exit_parse is not True:
