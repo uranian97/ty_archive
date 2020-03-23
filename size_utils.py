@@ -29,7 +29,8 @@ def of_year(year, conn):
     return total_bytes
 
 #converts bytes to readable vile sizes
-def readable_size(b):
+def readable_size(bs):
+    b=float(bs)
     val = ""
     if b >= 1024:
         if b < 1024*1024:

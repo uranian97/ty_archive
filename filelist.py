@@ -42,12 +42,18 @@ or you can use some of the commands below to get information.
     -quit to quit
         """)
     elif function=='load':
-        for i in range(1, len(args)):
-            file_name = args[i]
-            db.load_csv(file_name, con)
+        if len(args)>1:
+            for i in range(1, len(args)):
+                file_name = args[i]
+                db.load_csv(file_name, con)
+        else:
+            print("please specify file(s) to load")
     #get size of a certain year
     elif function=='sizeof':
-        print(size.readable_size(size.of_year(int(args[1]),con)))
+        if len(args)==2:
+            print(size.readable_size(size.of_year(int(args[1]),con)))
+        else:
+            print("please specify year to calculate")
     #get size report for all years
     elif function=="sizereport":
         if len(args) == 3:
@@ -64,12 +70,14 @@ or you can use some of the commands below to get information.
         dupes.report(con,True)
     #print duplicates of a specific file
     elif function=="dupesof":
-        dupes_df = dupes.get_dupes_of(args[1],con)
+        if len(args)==1:
+            dupes_df = dupes.get_dupes_of(args[1],con)
 
-        if dupes_df is not None:
-            print(dupes_df.to_string(columns=["file_name","kind","location","year","drive"]))
-        else: 
-            print(f"No Duplicates found for {file_name}")
+            if dupes_df is not None:
+                print(dupes_df.to_string(columns=["file_name","kind","location","year","drive"]))
+            else: 
+                print(f"No Duplicates found for {file_name}")
+        else:("Please specify a filename to search for")
     elif function=='quit':
         exit_parse=True
         print('bye bye')
