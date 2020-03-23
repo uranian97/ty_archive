@@ -6,8 +6,8 @@ import os.path as op
 
 # create a default path to connect to and create (if necessary) a database
 # called 'database.sqlite3' in the same directory as this script
-dbname = 'TaeyoonArchiveDb'
-DEFAULT_PATH = os.path.join(os.path.dirname(__file__), 'TaeyoonArchiveDb.sqlite')
+#dbname = 'TaeyoonArchiveDb'
+#DEFAULT_PATH = os.path.join(os.path.dirname(__file__), 'TaeyoonArchiveDb.sqlite')
 
 FIELDS = {  "file_name": 30,
             "date_modified":9,
@@ -30,30 +30,32 @@ FIELDS = {  "file_name": 30,
             "date_added":10}
 
 
-def connect(db_path=DEFAULT_PATH):
-    con = sqlite3.connect(db_path)
+def connect(db):
+    con = None
+    try:
+        dbname = f'{db}.sqlite'
+        db_path = os.path.join(os.path.dirname(__file__), dbname)
+        con = sqlite3.connect(db_path)
+        return con
+    except sqlite3.Error as e:
+        print(e)
     return con
 
 def load_csv(file_name, conn):
     file_path = op.abspath(f'csvs/{file_name}.csv')
     print("file path: " + file_path)
 
-    df = pd.read_csv(file_path)
-    #put in in the db 
+    #put in in the db in the archive table which holds all of our filelists
     #TODO specify datatypes for columns
-    df.to_sql('Files', conn, if_exists='append', index=False)
+    pd.read_csv(file_path).to_sql('files', conn, if_exists='append', index=False)
 
-    print("Table loaded.")
-    print('Fields:')
-    print(get_schema(conn, 'Files'))
+    print(f"{file_name} added to table: files")
 
 def get_tables(con):
-    cur = con.cursor()
-    cur.execute("SELECT name FROM sqlite_master WHERE type='table'")
-    return cur.fetchall()
+    table_sql="SELECT name FROM sqlite_master WHERE type='table'"
+    return pd.read_sql_query(table_sql,con)
 
 def get_schema(con, table_name):
-    cur = con.cursor()
-    cur.execute(f"SELECT sql FROM sqlite_master WHERE type='table' AND name='{table_name}'")
-    return cur.fetchone()[0]
+    schema_sql = f"SELECT sql FROM sqlite_master WHERE type='table' AND name='{table_name}'"
+    return pd.read_sql_query(schema_sql,con)
 
