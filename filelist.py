@@ -61,11 +61,12 @@ or you can use some of the commands below to get information.
         dupes.report(con,True)
     #print duplicates of a specific file
     elif function=="dupesof":
-        dupes_df = dupes.get_dupes_of(args[2],con)
-        if dupes_df == None:
-            print(f"No Duplicates found for {file_name}")
-        else: 
+        dupes_df = dupes.get_dupes_of(args[1],con)
+
+        if dupes_df is not None:
             print(dupes_df.to_string(columns=["file_name","kind","location","year","drive"]))
+        else: 
+            print(f"No Duplicates found for {file_name}")
     elif function=='quit':
         exit_parse=True
         print('bye bye')
@@ -73,7 +74,7 @@ or you can use some of the commands below to get information.
     else:
         try:
             cur = con.cursor()
-            results = cur.execute(cmd.strip())
+            cur.execute(cmd.strip())
             df = pd.read_sql_query(cmd.strip(), con)
             print(df.to_string())
         except sqlite3.Error as e:
