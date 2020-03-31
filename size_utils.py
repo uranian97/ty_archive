@@ -32,7 +32,6 @@ def of_year(year, conn):
     except: return None
 
 def to_bytes(size):
-    print(size)
     num = size.split()[0].strip()
     unit = size.split()[1].strip()
     if num != 'Zero':
