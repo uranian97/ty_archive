@@ -131,7 +131,7 @@ def make_db(con):
             file_path = op.join(os.path.dirname(__file__), f'filelists/{file_name}')
             print('Reading: '+file_path)
             df = load_excel_filelist(file_path,con)
-            df.to_sql(FILELIST, con, if_exists='append', index_label='index')#, dtype={k:v['type'] for k, v in FIELDS.items()})
+            df.to_sql(FILELIST, con, if_exists='append', index=False, chunksize=1000)#, dtype={k:v['type'] for k, v in FIELDS.items()})
         #generate meta tables
         
         print('All Filelists loaded.\n')
@@ -140,9 +140,10 @@ def make_db(con):
         print(f'Generating {SIZE_BY_YEAR} report...')
         yr_report = size.all_years(con, 1980,2020)
         yr_report.to_sql(SIZE_BY_YEAR,con,if_exists='replace',index=False)
+        print(yr_report.to_string())
         print(f'Generating {DUPLICATE_REPORT} report (this may take a while)...')
         dupes_report = dupes.report(con)
-        dupes_report.to_sql(DUPLICATE_REPORT, con, if_exists='replace', index=False)
+        dupes_report.to_sql(DUPLICATE_REPORT, con, if_exists='replace', index=False, chunksize=1000)
         print(f'\n')
         print('Table generation complete.')
         
@@ -168,7 +169,7 @@ def load(file_name, con):
             df = pd.read_csv(file_path)
         if file_path.endswith('.xls') or file_path.endswith('.xlsx'):
             df = pd.read_excel(file_path)
-        df.to_sql(table_name, con, if_exists='replace', index_label='index')
+        df.to_sql(table_name, con, if_exists='replace', index_label='index',chunksize=1000)
         return pd.read_sql_table(table_name, con)
     except:
         return None

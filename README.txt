@@ -1,5 +1,5 @@
 preparing a spreadsheet for insertion into this database:
-I have eliminated most of the manul operations that used to be needed. now it is only important that you ensure there are no empty rows at the end of the file.
+I have eliminated most of the manual operations that used to be needed. 
 
 When this is done, place the spreadsheet in the ./filelists folder
 
