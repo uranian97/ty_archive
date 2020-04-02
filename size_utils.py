@@ -15,9 +15,10 @@ def all_years(conn, yr1,yr2):
     #for every year in range 
     for yr in range(yr1, yr2):
         s = of_year(yr, conn)
-        data['year'].append(yr)
-        if s != 'None': data['size'].append(readable_size(float(s)))
-        else: data['size'].append(readable_size(float(0)))
+        if s != 'None': 
+            data['year'].append(yr)
+            data['size'].append(readable_size(float(s)))
+        #else: data['size'].append(readable_size(float(0)))
     df = pd.DataFrame(data=data)
     return df
 
