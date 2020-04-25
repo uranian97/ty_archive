@@ -157,7 +157,7 @@ def export_json(table_name, dropcols=[]):
     }
     vols = pd.DataFrame(volumes)
 
-    pd.concat([clean_df,vols]).to_json(path_or_buf=data_path, orient='records')
+    pd.concat([vols,clean_df]).to_json(path_or_buf=data_path, orient='records')
     print(clean_df.columns)
 
 #currently i am not using this 
