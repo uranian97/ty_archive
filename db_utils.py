@@ -75,13 +75,10 @@ def make_db():
         print(f"Please add excel files to the /filelists directory to populate {FILELIST} ") 
 
 def update():
-    export_json(FILELIST,['bytes','location','tags','date_modified','date_created','date_added','comments','size','description','version','pages','authors_or_artist','title','album','track_NO','genre','duration','audio_bitrate','encoding_app','audio_sample_rate','audio_channels','dimensions','width','height','total_pixels','height_DPI','width_DPI','color_space','color_profile','alpha_channel','creator','video_bitrate','total_bitrate','codecs','MD5_checksum','SHA256_checksum','camera_make','cam_description','camera_model_name','owner_name','serial_number','copyright','software','date_taken','lens_make','lens_model','lens_serial_number','iso','fnumber','focal_length','flash','orientation','latitude','longitude','maps_url'])
+    export_json(FILELIST,['location','tags','date_modified','date_created','date_added','comments','size','description','version','pages','authors_or_artist','title','album','track_NO','genre','duration','audio_bitrate','encoding_app','audio_sample_rate','audio_channels','dimensions','width','height','total_pixels','height_DPI','width_DPI','color_space','color_profile','alpha_channel','creator','video_bitrate','total_bitrate','codecs','MD5_checksum','SHA256_checksum','camera_make','cam_description','camera_model_name','owner_name','serial_number','copyright','software','date_taken','lens_make','lens_model','lens_serial_number','iso','fnumber','focal_length','flash','orientation','latitude','longitude','maps_url'])
     print('Loading project table')
     proj.make_project_lists()
     print('Projects loaded.')
-    
-    
-
 
 #generate meta tables
 def make_metatables():
@@ -149,7 +146,18 @@ def export_json(table_name, dropcols=[]):
     data_path = op.abspath(op.join(os.path.dirname(__file__), f'Data/{table_name}_export.json'))
     df = get_table(table_name)
     clean_df = df.drop(columns=dropcols)
-    clean_df.to_json(path_or_buf=data_path, orient='records')
+    
+    volumes = {
+        'file_name': ['Volumes', 'SFPC','Transcend','Seagate Backup Plus Drive','Taeyoon - Archive','Users', 'taeyoon'], 
+        'kind':['Volume','Drive','Drive','Drive','Drive','Volume','user'], 
+        'path':['/Volumes', '/Volumes/SFPC','/Volumes/Transcend','/Volumes/Seagate Backup Plus Drive','/Volumes/Taeyoon - Archive','/Users','/Users/taeyoon'], 
+        'parent_folder':['/Volumes','/Volumes','/Volumes','/Volumes','/Volumes','/Volumes','/Users'], 
+        'year':["","","","","","",""], 
+        'bytes':[0,0,0,0,0,0,0]
+    }
+    vols = pd.DataFrame(volumes)
+
+    pd.concat([clean_df,vols]).to_json(path_or_buf=data_path, orient='records')
     print(clean_df.columns)
 
 #currently i am not using this 
