@@ -1,6 +1,6 @@
 import sqlite3
-import db_utils as db
 import pandas as pd
+import db_utils as db
 
 UNITS={'bytes':1,
     'byte':1,
@@ -10,11 +10,11 @@ UNITS={'bytes':1,
     }
 
 #return df of size_by_year
-def all_years(conn, yr1,yr2):
+def all_years(yr1,yr2):
     data = {'year':[],'size':[]}
     #for every year in range 
     for yr in range(yr1, yr2):
-        s = of_year(yr, conn)
+        s = of_year(yr)
         if s != 'None': 
             data['year'].append(yr)
             data['size'].append(readable_size(float(s)))
@@ -23,9 +23,9 @@ def all_years(conn, yr1,yr2):
     return df
 
 #returns the size of files from given year
-def of_year(year, conn):
+def of_year(year):
     year_sql=f"""SELECT sum(bytes) AS 'total_bytes' FROM {db.FILELIST} WHERE year=='{year}'"""
-    cur = conn.cursor()
+    cur = db.CON.cursor()
     try:
         cur.execute(year_sql)
         total_bytes = str(cur.fetchone()[0])

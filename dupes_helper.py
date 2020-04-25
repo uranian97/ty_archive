@@ -3,10 +3,11 @@ import pandas as pd
 import db_utils as db
 import file_helper as folders
 
+
 #get all unique filenames
-def get_filenames(con):
+def get_filenames():
     names_sql = f'SELECT * FROM {db.FILELIST}'
-    filelist_table = pd.read_sql_query(names_sql,con)
+    filelist_table = pd.read_sql_query(names_sql,db.CON)
     dupe_names = []
     names_list = filelist_table['file_name'].values.tolist()
     for n in names_list:
@@ -18,16 +19,16 @@ def get_filenames(con):
     #return names
 
 #return df of all files with file_name if there are more than 1
-def get_dupes_of(file_name,con):
+def get_dupes_of(file_name):
     dupes_sql = f'SELECT * FROM {db.FILELIST} WHERE file_name="{file_name}"'
-    df = pd.read_sql_query(dupes_sql,con)
+    df = pd.read_sql_query(dupes_sql,db.CON)
     return df
 
-def all_dupes(df,con):
+def all_dupes(df):
     file_names = df['file_name'].values.tolist()
     dfs = []
     for name in file_names:
-        dupes_df = pd.read_sql_query(f'SELECT * FROM {db.DUPLICATE_REPORT} WHERE file_name LIKE {name}',con)
+        dupes_df = pd.read_sql_query(f'SELECT * FROM {db.DUPLICATE_REPORT} WHERE file_name LIKE {name}',db.CON)
         dfs.append(dupes_df)
         
         pd.set_option('display.max_colwidth',150)
@@ -36,9 +37,9 @@ def all_dupes(df,con):
         print("\n")
     return pd.concat(dfs)
 
-def get_overlap(location1,location2,con):
-    folder1 = folders.get_folder(location1,con)
-    folder2 = folders.get_folder(location2,con)
+def get_overlap(location1,location2):
+    folder1 = folders.get_folder(location1)
+    folder2 = folders.get_folder(location2)
     all = pd.concat([folder1, folder2])
     names = names = all['file_name'].drop_duplicates().values.tolist()
     results = []
@@ -52,7 +53,7 @@ def get_overlap(location1,location2,con):
                         FROM {db.FILELIST} 
                         WHERE file_name='{file_name}' 
                         AND location LIKE '{location2}%'"""
-        df = pd.read_sql_query(dupes_sql,con)
+        df = pd.read_sql_query(dupes_sql,db.CON)
         if(df.index)>1:
             results.append(df)
     result = pd.concat(results)
@@ -60,15 +61,15 @@ def get_overlap(location1,location2,con):
 
 
 #create or update the duplicate report
-def report2(con, ifprint=False):
-    names = get_filenames(con)
+def report2(ifprint=False):
+    names = get_filenames()
 
     dfs = []
 
     for name in names:
     
         #get duplicates of each file
-        df = get_dupes_of(name,con)
+        df = get_dupes_of(name)
         if len(df.index)>1:
             #for files with duplicates, add the to the df and print if needed
             dfs.append(df)
@@ -80,7 +81,7 @@ def report2(con, ifprint=False):
     df = pd.concat(dfs)
     return df
 
-def report(con):
+def report():
     dupes_sql = f"""SELECT a.* 
                     FROM file_list a 
                     JOIN (SELECT file_name, COUNT(*) 
@@ -90,5 +91,5 @@ def report(con):
                         ON a.file_name = b.file_name 
                         ORDER BY a.file_name;"""
 
-    return pd.read_sql_query(dupes_sql,con)
+    return pd.read_sql_query(dupes_sql,db.CON)
     
