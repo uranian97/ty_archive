@@ -18,11 +18,8 @@ def make_project_lists():
     chat = pd.read_excel(CHAT_path, names=CHAT_cols,usecols="A:P",skiprows=11,nrows=50, true_values=["Y"], false_values=["N"])
     chat.dropna(axis=0,how='all', inplace=True)
 
-    chat['collab'] = pd.Series([get_collab(x) for x in chat['artist']])
-    chat['artist'] = pd.Series([get_artist(x) for x in chat['artist']])
-
-
-    
+    #chat['collab'] = pd.Series([get_collab(x) for x in chat['artist']])
+    #chat['artist'] = pd.Series([get_artist(x) for x in chat['artist']])
 
     print(chat.to_string(index=False, columns=['exhibit','artist','type','title','medium','components','digital','year']))
 
@@ -36,6 +33,10 @@ def make_project_lists():
 
     site_list = pd.concat(list(proj_lists.values()))
     site_list.dropna(axis=0,how='all', inplace=True)
+
+    
+
+
     print(site_list.to_string(index=False, columns=['project_name', 'work', 'document', 'doc_short','year']))
 
 
@@ -50,7 +51,11 @@ def make_project_lists():
 
 def get_collab(artist):
     artists = re.split(', | and ', artist)
-    
+    if 'Taeyoon Choi' not in artists:
+        return None
+    else:
+        artists.remove('Taeyoon Choi')
+        return ', '.join(artists)
 
 def get_artist(artist):
     artists = re.split(', | and ', artist)
@@ -58,6 +63,7 @@ def get_artist(artist):
         return artist
     else:
         return 'Taeyoon Choi'
+
 
 def list_projects():
     df = pd.read_sql_query(f'SELECT project_name, work FROM {WEB_LIST}',db.CON)
