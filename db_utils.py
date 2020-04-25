@@ -66,6 +66,7 @@ def make_db():
                 #add it to the table
                 df.to_sql(FILELIST, CON, if_exists='append', index=False, chunksize=1000) 
         print('All Filelists loaded.\n')
+        export_json(FILELIST)
         update()
         make_metatables()
         info()
@@ -124,7 +125,11 @@ def load_excel_filelist(file_name):
     #change the fields
     df['bytes'] = pd.Series([size.to_bytes(x) for x in df['size']])
     df['year']=pd.Series([pd.Timestamp(x).year for x in df['date_modified']])
-    df['location']=pd.Series(x.strip() for x in df['location'])
+    df['location']=pd.Series([x.strip() for x in df['location']])
+
+    df.loc[df['kind'] != 'Folder', 'parent_folder'] = df['location']
+    df.loc[df['kind'] == 'Folder', 'parent_folder'] = str(df['location'])[:len(df['location'])-len(df['file_name'])-1]
+
     #drop the ones we dont need 
     return df
 
@@ -137,6 +142,11 @@ def export_excel(table_name):
     #convert dataframe to excel
     df.to_excel(path, table_name, index=False)
     print(f"Export complete, check the /lists folder for {table_name}_export.xlsx")
+
+def export_json(table_name):
+    data_path = op.abspath(op.join(os.path.dirname(__file__), f'Data/{table_name}_export.json'))
+    df = get_table(table_name)
+    df.to_json(path_or_buf=data_path, orient='records')
 
 #currently i am not using this 
 def load(file_name):
