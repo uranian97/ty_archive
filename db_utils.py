@@ -7,6 +7,8 @@ import sqlalchemy.types as dtypes
 import size_utils as size
 import dupes_helper as dupes
 import project_helper as proj
+import file_helper as folders
+import json
 # create a default path to connect to and create (if necessary) a database
 # called 'database.sqlite3' in the same directory as this script
 #dbname = 'TaeyoonArchiveDb'
@@ -34,7 +36,18 @@ FILES_FORMAT={
 }
 
 #these are the columns we want to see when we print
-PRINT_COLS = ['file_name','kind','size','year','location']
+PRINT_COLS = ['file_name','kind','bytes','year','parent_folder']
+#these are the columns we want to keep during import. add columns to this to keep them
+All_COLS = ['file_name','kind','size','year','location','parent_folder','path','bytes']
+ #list of columns in standard file list sheets and tables. dont change this
+FL_COLS = ['file_name','date_modified','date_created','kind','size','path','parent_folder','location','comments',
+        'description','tags','version','pages','authors_or_artist','title','album','track_NO','genre',
+        'year','duration','audio_bitrate','encoding_app','audio_sample_rate','audio_channels','dimensions',
+        'width','height','total_pixels','height_DPI','width_DPI','color_space','color_profile',
+        'alpha_channel','creator','video_bitrate','total_bitrate','codecs','date_added','MD5_checksum',
+        'SHA256_checksum','camera_make','cam_description','camera_model_name','owner_name','serial_number',
+        'copyright','software','date_taken','lens_make','lens_model','lens_serial_number','iso','fnumber',
+        'focal_length','flash','orientation','latitude','longitude','maps_url']
 
 #connect to database of name 'db'
 def connect(db):
@@ -59,13 +72,47 @@ def make_db():
         except sqlite3.OperationalError:
             pass
         #read the files in the filelists directory
+        
+        drives = []
+
         files = os.listdir(filelists_path)
         for file_name in files:
             if file_name.endswith('.xls') or file_name.endswith('.xlsx'):
                 print('Reading: '+file_name)
                 df = load_excel_filelist(file_name)
+
+                #create entries for drive and volumes
+                first_loc = df['location'].values.tolist()[0]
+                location = first_loc.split('/')
+                vol = location[1]
+                drive = location[2]
+
+                vol_file = {
+                    'file_name':vol,
+                    'path':"".join(["/",vol]),
+                    'location': "".join(["/",vol]),
+                    'parent_folder':'Archive_Head',
+                    'kind':'Volume',
+                    'size': 'Zero bytes',
+                }
+                drive_file = {
+                    'file_name':drive,
+                    'path':"".join(['/',vol,'/',drive]),
+                    'location':"".join(['/',vol,'/',drive]),
+                    'parent_folder':"".join(['/',vol]),
+                    'kind':'Drive',
+                    'size':'Zero bytes',
+                }
+                drives.append(vol_file)
+                drives.append(drive_file)
+
                 #add it to the table
                 df.to_sql(FILELIST, CON, if_exists='append', index=False, chunksize=1000) 
+
+        drives_df = pd.DataFrame(drives).drop_duplicates()
+
+        drives_df.to_sql(FILELIST, CON, if_exists='append', index=False)
+
         print('All Filelists loaded.\n')
         update()
         make_metatables()
@@ -75,7 +122,14 @@ def make_db():
         print(f"Please add excel files to the /filelists directory to populate {FILELIST} ") 
 
 def update():
-    export_json(FILELIST,['location','tags','date_modified','date_created','date_added','comments','size','description','version','pages','authors_or_artist','title','album','track_NO','genre','duration','audio_bitrate','encoding_app','audio_sample_rate','audio_channels','dimensions','width','height','total_pixels','height_DPI','width_DPI','color_space','color_profile','alpha_channel','creator','video_bitrate','total_bitrate','codecs','MD5_checksum','SHA256_checksum','camera_make','cam_description','camera_model_name','owner_name','serial_number','copyright','software','date_taken','lens_make','lens_model','lens_serial_number','iso','fnumber','focal_length','flash','orientation','latitude','longitude','maps_url'])
+    export_json(FILELIST, ['date_modified','date_created','comments',
+        'description','tags','version','pages','authors_or_artist','title','album','track_NO','genre',
+        'duration','audio_bitrate','encoding_app','audio_sample_rate','audio_channels','dimensions',
+        'width','height','total_pixels','height_DPI','width_DPI','color_space','color_profile',
+        'alpha_channel','creator','video_bitrate','total_bitrate','codecs','date_added','MD5_checksum',
+        'SHA256_checksum','camera_make','cam_description','camera_model_name','owner_name','serial_number',
+        'copyright','software','date_taken','lens_make','lens_model','lens_serial_number','iso','fnumber',
+        'focal_length','flash','orientation','latitude','longitude','maps_url'])
     print('Loading project table')
     proj.make_project_lists()
     print('Projects loaded.')
@@ -108,16 +162,7 @@ def info():
     print(about_txt)
             
 def load_excel_filelist(file_name):
-    #list of columns in standard file list sheets and tables. dont change this
-    FL_COLS = ['file_name','date_modified','date_created','kind','size','path','parent_folder','location','comments',
-        'description','tags','version','pages','authors_or_artist','title','album','track_NO','genre',
-        'year','duration','audio_bitrate','encoding_app','audio_sample_rate','audio_channels','dimensions',
-        'width','height','total_pixels','height_DPI','width_DPI','color_space','color_profile',
-        'alpha_channel','creator','video_bitrate','total_bitrate','codecs','date_added','MD5_checksum',
-        'SHA256_checksum','camera_make','cam_description','camera_model_name','owner_name','serial_number',
-        'copyright','software','date_taken','lens_make','lens_model','lens_serial_number','iso','fnumber',
-        'focal_length','flash','orientation','latitude','longitude','maps_url']
-
+   
     file_path = op.abspath(op.join(os.path.dirname(__file__), f'filelists/{file_name}'))
     #read the excel file
     df = pd.read_excel(file_path, names=FL_COLS)
@@ -125,24 +170,10 @@ def load_excel_filelist(file_name):
     df['bytes'] = pd.Series([size.to_bytes(x) for x in df['size']])
     df['year']=pd.Series([pd.Timestamp(x).year for x in df['date_modified']])
     df['location']=pd.Series([x.strip() for x in df['location']])
+    df['parent_folder'] = pd.Series([folders.get_parent_folder(x) for x in df['path']])
 
-    df['parent_folder']= df['location']
-
-    parents = []
-
-    for i, row in df.iterrows():
-        if row['kind'] == 'Folder':
-            l_name = len(row['file_name'])+1
-            l_par = len(row['parent_folder'])
-            par = row['parent_folder'] 
-            new_len = l_par - l_name
-            parent_folder = par[:new_len]
-            parents.append(parent_folder)
-        else: parents.append(row['parent_folder'])
-
-    df['parent_folder']=pd.Series(parents)
-    
     #drop the ones we dont need 
+
     return df
 
 #export specified table as excel file
@@ -159,19 +190,21 @@ def export_json(table_name, dropcols=[]):
     data_path = op.abspath(op.join(os.path.dirname(__file__), f'Data/{table_name}_export.json'))
     df = get_table(table_name)
     clean_df = df.drop(columns=dropcols)
-    
-    volumes = {
-        'file_name': ['Volumes', 'SFPC','Transcend','Seagate Backup Plus Drive','Taeyoon - Archive','Users', 'taeyoon'], 
-        'kind':['Volume','Drive','Drive','Drive','Drive','Volume','user'], 
-        'path':['/Volumes', '/Volumes/SFPC','/Volumes/Transcend','/Volumes/Seagate Backup Plus Drive','/Volumes/Taeyoon - Archive','/Users','/Users/taeyoon'], 
-        'parent_folder':['/Volumes','/Volumes','/Volumes','/Volumes','/Volumes','/Volumes','/Users'], 
-        'year':["","","","","","",""], 
-        'bytes':[0,0,0,0,0,0,0]
-    }
-    vols = pd.DataFrame(volumes)
 
-    pd.concat([vols,clean_df]).to_json(path_or_buf=data_path, orient='records')
-    print(clean_df.columns)
+    head = {
+        'file_name':'Archive',
+        'kind':'Head',
+        'path':'Archive_Head',
+        'location':'Archive_Head'
+    }
+    
+    recs = clean_df.to_dict(orient='records')
+    recs.append(head)
+
+    data_path = op.abspath(op.join(os.path.dirname(__file__), f'Data/{table_name}_export.json'))
+    with open(data_path, 'w', encoding='utf-8') as f:
+        json.dump(recs, f, ensure_ascii=False, indent=4)
+    
 
 #currently i am not using this 
 def load(file_name):

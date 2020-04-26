@@ -22,6 +22,12 @@ def context_folders_of(files_df):
     df = get_folder(l)
     dfs.append(df)
   return pd.concat(dfs)
+
+def get_parent_folder(path):
+  folders = path.split("/")
+  folders = folders[:-1]
+  parent = "/".join(folders)
+  return parent[1:]
   
 
 
