@@ -126,9 +126,22 @@ def load_excel_filelist(file_name):
     df['year']=pd.Series([pd.Timestamp(x).year for x in df['date_modified']])
     df['location']=pd.Series([x.strip() for x in df['location']])
 
-    df.loc[df['kind'] != 'Folder', 'parent_folder'] = df['location']
-    df.loc[df['kind'] == 'Folder', 'parent_folder'] = str(df['location'])[:len(df['location'])-len(df['file_name'])-1]
+    df['parent_folder']= df['location']
 
+    parents = []
+
+    for i, row in df.iterrows():
+        if row['kind'] == 'Folder':
+            l_name = len(row['file_name'])+1
+            l_par = len(row['parent_folder'])
+            par = row['parent_folder'] 
+            new_len = l_par - l_name
+            parent_folder = par[:new_len]
+            parents.append(parent_folder)
+        else: parents.append(row['parent_folder'])
+
+    df['parent_folder']=pd.Series(parents)
+    
     #drop the ones we dont need 
     return df
 
