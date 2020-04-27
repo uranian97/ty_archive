@@ -24,7 +24,7 @@ def all_years(yr1,yr2):
 
 #returns the size of files from given year
 def of_year(year):
-    year_sql=f"""SELECT sum(bytes) AS 'total_bytes' FROM {db.FILELIST} WHERE year=='{year}'"""
+    year_sql=f"""SELECT sum(bytes) AS 'total_bytes' FROM {db.FILELIST} WHERE year=='{year}' AND kind NOT LIKE 'Folder'"""
     cur = db.CON.cursor()
     try:
         cur.execute(year_sql)
