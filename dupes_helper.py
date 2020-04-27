@@ -30,20 +30,12 @@ def get_dupes_of(file_name):
 def all_dupes(df):
     file_names = df['file_name'].values.tolist()
     dfs = []
-    dupes_json = {}
     for name in file_names:
         dupes_df = pd.read_sql_query(f'SELECT * FROM {db.DUPLICATE_REPORT} WHERE file_name LIKE {name}',db.CON)
         dfs.append(dupes_df)
-        dupes_json[name] = dupes_df['path'].values.toList()
 
         print(dupes_df.to_string(columns=db.PRINT_COLS))
         print("\n")
-
-    #make json of duplicates for visualization
-    data_path = op.abspath(op.join(os.path.dirname(__file__), f'Data/duplicates_export.json'))
-    with open(data_path, 'w', encoding='utf-8') as f:
-        json.dump(dupes_json, f, ensure_ascii=False, indent=4)
-
     return pd.concat(dfs)
 
 def get_overlap(location1,location2):
