@@ -41,6 +41,10 @@ def make_project_lists():
     print('Reading Taeyoonchoi.com sheet')
     site = load_site_list()
 
+    print(chat.to_string(columns=['exhibit','title','type','medium']))
+    print(site.to_string(columns=['project_name','work','document','doc_short','tags']))
+
+
     chat.to_sql(CHAT_LIST, db.CON, if_exists='replace')
     site.to_sql(SITE_LIST, db.CON, if_exists='replace')
     

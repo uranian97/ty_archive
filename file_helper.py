@@ -27,7 +27,7 @@ def get_parent_folder(path):
   folders = path.split("/")
   folders = folders[:-1]
   parent = "/".join(folders)
-  return parent
+  return parent.strip()
 
   
 
